@@ -19,11 +19,24 @@ a {
 }
 
 @media (prefers-color-scheme: dark) {
-  html {
+  /* html {
     color-scheme: dark;
-  }
-  body {
+  } */
+  /* body {
     color: white;
     background: black;
-  }
+  } */
+}
+.card {
+  @apply mb-5 block rounded-lg border border-gray-200 shadow-md
+}
+
+.primary-button{
+  @apply bg-amber-300 rounded-md px-4 py-2 shadow outline-none hover:bg-amber-400 active:bg-amber-500
+}
+
+input,
+select,
+textarea{
+  @apply border rounded p-2 outline-none ring-indigo-300 focus:ring
 }
