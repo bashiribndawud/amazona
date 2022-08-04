@@ -24,6 +24,7 @@ export default function LoginScreen() {
 
   const submitHandler = async ({ email, password }) => {
     try {
+      // sending an ajax signIn API request to authenticate users
       const result = await signIn("credentials", {
         redirect: false,
         email,
