@@ -1,4 +1,3 @@
-import Image from 'next/image'
 import Layout from '../components/Layout'
 import ProductList from '../components/ProductList'
 import data from '../utils/data'

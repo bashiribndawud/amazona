@@ -19,9 +19,9 @@ export default function Layout({ children, title }) {
   }, [cart.cartItems]);
 
   const logoutClickHandler = () => {
-    Cookies.remove('cart')
-    dispatch({type: 'CART_RESET'})
-    signOut({callbackUrl: '/login'})
+    Cookies.remove('cart');
+    dispatch({type: 'CART_RESET'});
+    signOut({callbackUrl: '/login'});
   }
   return (
     <>
@@ -84,7 +84,7 @@ export default function Layout({ children, title }) {
             </div>
           </nav>
         </header>
-        <main className="container m-auto mt-4 px-4">{children}</main>
+        <main className="container mx-auto mt-4 px-4">{children}</main>
         <footer className="flex justify-center items-center h-10 shadow-inner ">
           <p>Copyright &copy; 2022 Amazona</p>
         </footer>

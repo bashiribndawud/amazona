@@ -3,8 +3,11 @@ import Cookies from "js-cookie";
 
 export const Store = createContext();
 
+
 const initialState = {
-  cart: Cookies.get('cart')? JSON.parse(Cookies.get('cart')): { cartItems: []},
+  cart: Cookies.get('cart')
+    ? JSON.parse(Cookies.get('cart'))
+    : { cartItems: [], shippingAddress: {} },
   
 }
 
@@ -15,6 +18,7 @@ function reducerfn(state, action){
         const existItem = state.cart.cartItems.find(
           (item) => item.slug === newItem.slug
         );
+        // update cart item will new cart value
         const cartItems = existItem
           ? state.cart.cartItems.map((item) =>
               item.name === existItem.name ? newItem : item
@@ -38,6 +42,19 @@ function reducerfn(state, action){
             cartItem: [],
             shippingAddress: {location: {}},
             paymentMethod: ''
+          }
+        }
+      }
+
+      case 'SAVE_SHIPPING_ADDRESS' :{
+        return {
+          ...state,
+          cart: {
+            ...state.cart,
+            shippingAddress:{
+              ...state.cart.shippingAddress,
+              ...action.payload
+            }
           }
         }
       }
