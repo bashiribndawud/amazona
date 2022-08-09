@@ -32,7 +32,7 @@ function reducerfn(state, action){
           (item) => item.slug !== action.payload.slug
         );
         Cookies.set('cart', JSON.stringify({ ...state.cart, cartItems }))
-        return { ...state, cart: { ...state.cart, cartItems } };
+        return {...state, cart: {...state.cart, cartItems}}
       }
 
       case 'CART_RESET' :{
