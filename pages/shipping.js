@@ -56,6 +56,7 @@ export default function ShippingScreen() {
           <input
             className="w-full"
             id="fullName"
+            name="fullName"
             {...register("address", {
               required: "Please enter address",
               minLength: { value: 3, message: "Address is more than 2 char" },

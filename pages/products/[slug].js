@@ -39,7 +39,7 @@ export default function ProductScreen({ product }) {
     toast.success("Product Added To Cart");
     setTimeout(() => {
       router.push("/cart");
-    },3000)
+    },2000)
   };
   return (
     <Layout title={product.slug}>
