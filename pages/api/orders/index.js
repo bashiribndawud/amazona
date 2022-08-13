@@ -10,7 +10,6 @@ const handler = async (req, res) => {
   }
   const { user } = session;
   await db.connect();
-  console.log(req.body)
   const newOrder = new Order({
     ...req.body,
     user: user._id
