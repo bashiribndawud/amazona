@@ -12,6 +12,8 @@ import { toast } from "react-toastify";
 function CartScreen() {
   const { state, dispatch } = useContext(Store);
   const router = useRouter();
+  const { redirect } = router.query;
+  console.log(redirect);
   const {
     cart: { cartItems },
   } = state;
@@ -21,15 +23,15 @@ function CartScreen() {
   };
 
   const updateCartHandler = async (item, qty) => {
-    const quantity = Number(qty)
+    const quantity = Number(qty);
     const { data } = await axios.get(`/api/products/${item._id}`);
-    if(data.countInStock < quantity){
-      toast.error('Product Out of Stock')
-      return
+    if (data.countInStock < quantity) {
+      toast.error("Product Out of Stock");
+      return;
     }
-    dispatch({type: 'CART_ADD_ITEM', payload: {...data, quantity}});
-    toast.success('Product Updated In Cart')
-  }
+    dispatch({ type: "CART_ADD_ITEM", payload: { ...data, quantity } });
+    toast.success("Product Updated In Cart");
+  };
   return (
     <Layout title="Shoppping Cart">
       <h1 className="mb-4 text-xl">Shopping Cart</h1>
@@ -65,7 +67,12 @@ function CartScreen() {
                       </Link>
                     </td>
                     <td className="p-5 text-right">
-                      <select value={item.quantity} onChange={(e) => updateCartHandler(item, e.target.value)}>
+                      <select
+                        value={item.quantity}
+                        onChange={(e) =>
+                          updateCartHandler(item, e.target.value)
+                        }
+                      >
                         {[...Array(item.countInStock).keys()].map((x) => (
                           <option key={x + 1} value={x + 1}>
                             {x + 1}
@@ -94,7 +101,7 @@ function CartScreen() {
               </li>
               <li>
                 <button
-                // check the authentication of the user(login page) and redirect approprately
+                  // check the authentication of the user(login page) and redirect approprately
                   onClick={() => router.push("login?redirect=/shipping")}
                   className="primary-button w-full"
                 >
@@ -109,4 +116,4 @@ function CartScreen() {
   );
 }
 // CartScreen is dynamic and will only be rendered in client side
-export default dynamic(() => Promise.resolve(CartScreen), {ssr:false})
+export default dynamic(() => Promise.resolve(CartScreen), { ssr: false });

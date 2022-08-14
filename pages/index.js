@@ -16,13 +16,13 @@ export default function Home({ products }) {
     const quantity = existItem ? existItem.quantity + 1 : 1;
     // created an API to get Product from backend which send a res.send to the frontend
     const { data } = await axios.get(`/api/products/${product._id}`);
-    
+    console.log(data);
     if (data.countInStock < quantity) {
       toast.error("Product out of stock");
       return;
     }
     dispatch({ type: "CART_ADD_ITEM", payload: { ...product, quantity } });
-    toast.success('Product Added To Cart')
+    toast.success("Product Added To Cart");
   };
   return (
     <div>

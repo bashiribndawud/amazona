@@ -8,14 +8,15 @@ import { toast } from "react-toastify";
 import { useRouter } from "next/router";
 
 export default function LoginScreen() {
-  const router = useRouter()
-  const {redirect} = router.query
-  const {data: session} = useSession();
+  const router = useRouter();
+  const { redirect } = router.query;
+  console.log(redirect)
+  const { data: session } = useSession();
   useEffect(() => {
     if (session?.user) {
       router.push(redirect || "/");
     }
-  }, [router, session, redirect])
+  }, [router, session, redirect]);
   const {
     handleSubmit,
     register,
@@ -84,7 +85,7 @@ export default function LoginScreen() {
         </div>
         <div className="mb-4">
           Don&apos;t have an account&#x3F;
-          <Link href="/register"> Register</Link>
+          <Link href={`/register?redirect=${redirect || '/'}`}> Register</Link>
         </div>
       </form>
     </Layout>

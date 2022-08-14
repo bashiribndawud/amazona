@@ -95,6 +95,7 @@ export default function Layout({ title, children }) {
                   </Menu.Items>
                 </Menu>
               ) : (
+                
                 <Link href="/login">
                   <a className="p-2">Login</a>
                 </Link>
