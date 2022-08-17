@@ -1,8 +1,10 @@
+import { PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js";
 import axios from "axios";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useReducer } from "react";
+import { toast } from "react-toastify";
 import Layout from "../../components/Layout";
 import { getError } from "../../utils/error";
 
@@ -19,14 +21,26 @@ const reducer = (state, action) => {
       return { ...state, loading: false, order: action.payload, error: "" };
     case "FETCH_FAIL":
       return { ...state, loading: false, error: action.payload };
+    case "PAY_REQUEST":
+      return { ...state, loadingPay: true };
+    case "PAY_SUCCESS":
+      return { ...state, loadingPay: false, successPay: true };
+    case "PAY_FAIL":
+      return { ...state, loadingPay: false, errorPay: action.payload };
+    case "PAY_RESET":
+      return { ...state, loadingPay: false, successPay: false, errorPay: "" };
     default:
       return state;
   }
 };
 function OrderScreen() {
+  //   Hook from PayPal
+  const [{ isPending }, paypalDispatch] = usePayPalScriptReducer();
   const { query } = useRouter();
   const { id: orderId } = query;
-  const [{ loading, error, order }, dispatch] = useReducer(reducer, initialState);
+
+  const [{ loading, error, order, successPay, loadingPay }, dispatch] =
+    useReducer(reducer, initialState);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -39,10 +53,27 @@ function OrderScreen() {
         dispatch({ type: "FETCH_FAIL", payload: getError(error) });
       }
     };
-    if (!order._id || (order._id && order._id !== orderId)) {
+    if (!order._id || successPay || (order._id && order._id !== orderId)) {
       fetchOrder();
+      if (successPay) {
+        dispatch({ type: "PAY_RESET" });
+      }
+    } else {
+      const loadPayPalScript = async () => {
+        // get ClientId from the below endpoint api/keys/paypal
+        const { data: clientId } = await axios.get("/api/keys/paypal");
+        paypalDispatch({
+          type: "resetOptions",
+          value: {
+            "client-id": clientId,
+            currency: "USD",
+          },
+        });
+        paypalDispatch({ type: "setLoadingStatus", value: "pending" });
+      };
+      loadPayPalScript();
     }
-  }, [orderId, order]);
+  }, [orderId, order, paypalDispatch, successPay]);
   const {
     shippingAddress,
     paymentMethod,
@@ -56,6 +87,40 @@ function OrderScreen() {
     isDelivered,
     deliveredAt,
   } = order;
+
+  function createOrder(data, actions) {
+    return actions.order
+      .create({
+        purchase_units: [
+          {
+            amount: { value: totalPrice },
+          },
+        ],
+      })
+      .then((orderId) => {
+        return orderId;
+      });
+  }
+  function onApprove(data, actions) {
+    // confirm/commit/complete the payment
+    return actions.order.capture().then(async function (details) {
+      try {
+        dispatch({ type: "PAY_REQUEST" });
+        const { data } = await axios.put(
+          `/api/orders/${order._id}/pay`,
+          details
+        );
+        dispatch({ type: "PAY_SUCCESS", payload: data });
+        toast.success("Order is paid successfully");
+      } catch (error) {
+        dispatch({ type: "PAY_FAIL", payload: getError(error) });
+        toast.error(getError(error));
+      }
+    });
+  }
+  const onError = (error) => {
+    toast.error(getError(error));
+  };
   return (
     <Layout title={`Order ${orderId}`}>
       <h1 className="mb-4 w-80 text-center p-2 rounded-lg bg-yellow-300">{`Order ${orderId}`}</h1>
@@ -103,23 +168,24 @@ function OrderScreen() {
                     <tr key={item._id} className="border-b">
                       <td>
                         <Link href={`/product/${item.slug}`}>
-                            <a className="flex items-center">
-                                <Image
-                                src={item.image}
-                                alt={item.name}
-                                width={50}
-                                height={50}
-                                >    
-                                </Image>
-                                &nbsp;
-                                {item.name}
-                            </a>
+                          <a className="flex items-center">
+                            <Image
+                              src={item.image}
+                              alt={item.name}
+                              width={50}
+                              height={50}
+                            ></Image>
+                            &nbsp;
+                            {item.name}
+                          </a>
                         </Link>
                       </td>
 
                       <td className="p-5 text-right">{item.quantity}</td>
                       <td className="p-5 text-right">${item.price}</td>
-                      <td className="p-5 text-right">${item.quantity * item.price}</td>
+                      <td className="p-5 text-right">
+                        ${item.quantity * item.price}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -129,30 +195,46 @@ function OrderScreen() {
           <div className="card p-5 h-fit">
             <h2 className="text-lg">Order Summary</h2>
             <ul>
+              <li>
+                <div className="mb-2 flex justify-between">
+                  <div>Items</div>
+                  <div>${itemsPrice}</div>
+                </div>
+              </li>
+              <li>
+                <div className="mb-2 flex justify-between">
+                  <div>Tax</div>
+                  <div>${taxPrice}</div>
+                </div>
+              </li>
+              <li>
+                <div className="mb-2 flex justify-between">
+                  <div>Shipping</div>
+                  <div>${shippingPrice}</div>
+                </div>
+              </li>
+              <li>
+                <div className="mb-2 flex justify-between">
+                  <div>Total</div>
+                  <div>${totalPrice}</div>
+                </div>
+              </li>
+              {!isPaid && (
                 <li>
-                    <div className="mb-2 flex justify-between">
-                        <div>Items</div>
-                        <div>${itemsPrice}</div>
+                  {isPending ? (
+                    <div>Loading...</div>
+                  ) : (
+                    <div className="w-full">
+                      <PayPalButtons
+                        createOrder={createOrder}
+                        onApprove={onApprove}
+                        onError={onError}
+                      ></PayPalButtons>
                     </div>
+                  )}
+                  {loadingPay && <div>Loading...</div>}
                 </li>
-                <li>
-                    <div className="mb-2 flex justify-between">
-                        <div>Tax</div>
-                        <div>${taxPrice}</div>
-                    </div>
-                </li>
-                <li>
-                    <div className="mb-2 flex justify-between">
-                        <div>Shipping</div>
-                        <div>${shippingPrice}</div>
-                    </div>
-                </li>
-                <li>
-                    <div className="mb-2 flex justify-between">
-                        <div>Total</div>
-                        <div>${totalPrice}</div>
-                    </div>
-                </li>
+              )}
             </ul>
           </div>
         </div>
